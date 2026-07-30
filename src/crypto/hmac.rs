@@ -2,7 +2,7 @@ use crate::crypto::algorithm::AlgorithmID;
 use crate::crypto::SecretOrKey;
 use crate::error::{Error, ErrorDetails};
 use crate::raw::*;
-use ring::constant_time::verify_slices_are_equal;
+use constant_time_eq::constant_time_eq;
 use ring::hmac;
 
 impl From<AlgorithmID> for hmac::Algorithm {
@@ -41,6 +41,9 @@ pub fn verify(
 ) -> Result<(), Error> {
     // we just re-sign the message with the key and compare if they are equal
     let signed = sign(algorithm, secret_or_key, message)?;
-    verify_slices_are_equal(signature.as_bytes(), signed.as_ref())
-        .map_err(|_| Error::InvalidSignature())
+    if !constant_time_eq(signature.as_bytes(), signed.as_bytes()) {
+        Err(Error::InvalidSignature())
+    } else {
+        Ok(())
+    }
 }

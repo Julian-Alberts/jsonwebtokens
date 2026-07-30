@@ -41,7 +41,7 @@ pub fn sign(
 
     match secret_or_key {
         SecretOrKey::RsaKeyPair(key_pair) => {
-            let mut signature = vec![0; key_pair.public_modulus_len()];
+            let mut signature = vec![0; key_pair.public().modulus_len()];
             let rng = rand::SystemRandom::new();
             key_pair
                 .sign(ring_alg, &rng, message.as_bytes(), &mut signature)

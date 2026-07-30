@@ -1,3 +1,4 @@
+use ring::rand::SystemRandom;
 use ring::signature;
 use serde::{Deserialize, Serialize};
 use simple_asn1::BigUint;
@@ -274,15 +275,17 @@ impl Algorithm {
 
         let ring_alg = id.into();
         let pem_key = PemEncodedKey::new(key)?;
-        let signing_key =
-            signature::EcdsaKeyPair::from_pkcs8(ring_alg, pem_key.as_ec_private_key()?).map_err(
-                |e| {
-                    Error::InvalidInput(ErrorDetails::map(
-                        "Failed to create ECDSA key pair for signing",
-                        Box::new(e),
-                    ))
-                },
-            )?;
+        let signing_key = signature::EcdsaKeyPair::from_pkcs8(
+            ring_alg,
+            pem_key.as_ec_private_key()?,
+            &SystemRandom::new(),
+        )
+        .map_err(|e| {
+            Error::InvalidInput(ErrorDetails::map(
+                "Failed to create ECDSA key pair for signing",
+                Box::new(e),
+            ))
+        })?;
 
         Ok(Algorithm {
             id,

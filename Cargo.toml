@@ -22,7 +22,8 @@ serde_json = "1"
 regex = { version = "1", optional = true }
 pem = "4.0"
 simple_asn1 = "0.6"
-ring = { version = "0.16", features = ["std"] }
+ring = { version = "0.17", features = ["std"] }
+constant_time_eq = "0.5.0"
 
 [dev-dependencies]
 tokio-test = "0.4"
