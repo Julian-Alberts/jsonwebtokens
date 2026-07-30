@@ -88,7 +88,7 @@ pub struct TokenSlices<'a> {
 /// [Verifier::verify_claims_only](Verifier::verify_claims_only) api can be used
 /// to check the claims.
 ///
-pub fn split_token(token: &str) -> Result<TokenSlices, Error> {
+pub fn split_token(token: &str) -> Result<TokenSlices<'_>, Error> {
     let (signature, message) = expect_two!(token.rsplitn(2, '.'));
     let (header, claims) = expect_two!(message.splitn(2, '.'));
 
