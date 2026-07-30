@@ -1,7 +1,7 @@
 use serde_json::value::Value;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 
 #[cfg(feature = "matching")]
 use regex::Regex;
@@ -92,7 +92,7 @@ enum VerifierKind {
 /// Immutable requirements for checking token claims
 #[derive(Clone)]
 pub struct Verifier {
-    leeway: u32,
+    leeway: u64,
     ignore_exp: bool,
     ignore_nbf: bool,
     ignore_iat: bool,
@@ -125,7 +125,7 @@ impl Verifier {
             match claims.get("iat") {
                 Some(serde_json::value::Value::Number(number)) => {
                     if let Some(iat) = number.as_u64() {
-                        if iat > time_now + (self.leeway as u64) {
+                        if iat > time_now + self.leeway {
                             return Err(Error::MalformedToken(ErrorDetails::new(
                                 "Issued with a future 'iat' time",
                             )));
@@ -149,7 +149,7 @@ impl Verifier {
             match claims.get("nbf") {
                 Some(serde_json::value::Value::Number(number)) => {
                     if let Some(nbf) = number.as_u64() {
-                        if nbf > time_now + (self.leeway as u64) {
+                        if nbf > time_now + self.leeway {
                             return Err(Error::MalformedToken(ErrorDetails::new(
                                 "Time is before 'nbf'",
                             )));
@@ -173,7 +173,7 @@ impl Verifier {
             match claims.get("exp") {
                 Some(serde_json::value::Value::Number(number)) => {
                     if let Some(exp) = number.as_u64() {
-                        if exp <= time_now - (self.leeway as u64) {
+                        if exp <= time_now - self.leeway {
                             return Err(Error::TokenExpiredAt(exp));
                         }
                     } else {
@@ -397,7 +397,7 @@ impl Verifier {
 /// Configures the requirements for checking token claims with a builder-pattern API
 #[derive(Debug, Default)]
 pub struct VerifierBuilder {
-    leeway: u32,
+    leeway: u64,
     ignore_exp: bool,
     ignore_nbf: bool,
     ignore_iat: bool,
@@ -500,7 +500,12 @@ impl VerifierBuilder {
 
     /// Sets a leeway (in seconds) should be allowed when checking exp, nbf and iat claims
     pub fn leeway(&mut self, leeway: u32) -> &mut Self {
-        self.leeway = leeway;
+        self.leeway = leeway as u64;
+        self
+    }
+
+    pub fn leeway_duration(&mut self, leeway: Duration) -> &mut Self {
+        self.leeway = leeway.as_secs();
         self
     }
 
